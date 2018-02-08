@@ -46,28 +46,50 @@ namespace joint_follower {
 
 class JointFollower : public iimoveit::RobotInterface {
 public:
-  JointFollower(ros::NodeHandle* node_handle, const std::string& planning_group, const std::string& base_frame, double scale_factor, double max_radius)
+  JointFollower(ros::NodeHandle* node_handle, const std::string& planning_group, const std::string& base_frame, double scale_factor, double max_radius, bool rad_input)
       : RobotInterface(node_handle, planning_group, base_frame),
         scale_factor_(scale_factor),
         max_radius_(max_radius),
-        max_radius2_(max_radius*max_radius) {
-    //base_pose_.position.x = 0.5;
-    //base_pose_.position.y = 0.0;
-    //base_pose_.position.z = 0.6;
-    //base_pose_.orientation.x = 0.0;
-    //base_pose_.orientation.y = 1.0;
-    //base_pose_.orientation.z = 0.0;
-    //base_pose_.orientation.w = 0.0;
-		//base_pose_.position.x = -0.3; //changed base pose 
-    //base_pose_.position.y = 0.5;
-    //base_pose_.position.z = 0.6;
-		base_pose_.position.x = -0.5; //changed base pose -> base in shoulder
-    base_pose_.position.y = 0.3;
-    base_pose_.position.z = 0.6;
-    base_pose_.orientation.x = -sqrt(2.0)/2.0;
-    base_pose_.orientation.y = 0.0;
-    base_pose_.orientation.z = 0.0;
-    base_pose_.orientation.w = sqrt(2.0)/2.0;
+        max_radius2_(max_radius*max_radius),
+				rad_input_(rad_input) {
+
+		if(rad_input_) {
+			angle_conversion_ = 1.0;	
+		}
+		else {
+			angle_conversion_ = 3.1416/180.0;
+		}
+
+		// use when base pose is given
+//		base_pose_.position.x = 0.0; //changed base pose -> base in shoulder
+//    base_pose_.position.y = 0.5;
+//    base_pose_.position.z = 0.6;
+//    base_pose_.orientation.x = -sqrt(2.0)/2.0;
+//    base_pose_.orientation.y = 0.0;
+//    base_pose_.orientation.z = 0.0;
+//    base_pose_.orientation.w = sqrt(2.0)/2.0;
+
+		// use when initial joint positions are given
+		initial_joint_positions_.joint_names.resize(7);
+		initial_joint_positions_.joint_names = RobotInterface::getJointNames();
+		initial_joint_positions_.points.resize(1);
+		initial_joint_positions_.points[0].positions.resize(7);
+		initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -44.2626;
+		initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (16.7988 - 90.0);
+		initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -1.0 * -38.9998;
+		initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -67.7357;
+		initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 61.3977 + 90.0); 
+		initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -11.0314; 
+		initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
+
+//		initial_joint_positions_.points[0].positions[0] = angle_conversion_ * 0.0;
+//		initial_joint_positions_.points[0].positions[1] = angle_conversion_ * (0.0 - 90.0);
+//		initial_joint_positions_.points[0].positions[2] = angle_conversion_ * -1.0 * 0.0;
+//		initial_joint_positions_.points[0].positions[3] = angle_conversion_ * 0.0;
+//		initial_joint_positions_.points[0].positions[4] = angle_conversion_ * (-1.0 * 0.0 + 90.0); 
+//		initial_joint_positions_.points[0].positions[5] = angle_conversion_ * 0.0; 
+//		initial_joint_positions_.points[0].positions[6] = angle_conversion_ * 0.0;
+		
   }
 
   void moveToBasePose() {
@@ -92,7 +114,7 @@ public:
   }
 	
 	void setBasePoseJointPositions(const std::vector<std::string>& names, const std::vector<double>& initial_angles) {
-		// header + names + time_from_start missing?
+		// header missing?
 		
 		base_pose_joint_positions_.joint_names.resize(7);
 		base_pose_joint_positions_.joint_names = names;
@@ -117,14 +139,24 @@ public:
 		base_pose_joint_positions_.points[0].time_from_start = ros::Duration(0.01); // later variable
 	}
 
+	void moveToInitialJointPositions() {
+		planAndMove(initial_joint_positions_.points[0].positions, std::string("initial joint positions"));
+	}
+
+	void setBasePoseToCurrent() {
+		base_pose_ = getPose(std::string("iiwa_link_ee")).pose;	
+	}
 
 private:
   ros::Subscriber joint_subscriber_;
+	trajectory_msgs::JointTrajectory initial_joint_positions_;
   geometry_msgs::Pose base_pose_;
 	trajectory_msgs::JointTrajectory base_pose_joint_positions_; 
   double scale_factor_;
   double max_radius_;
   double max_radius2_;
+	bool rad_input_;
+	double angle_conversion_;
 
 	// will get called when a new message has arrived on the subscribed topic
   void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) { // ConstPtr&? -> typedef constant pointer
@@ -146,20 +178,14 @@ private:
       //geometry_msgs::Pose target_pose = base_pose_;
 			trajectory_msgs::JointTrajectory trajectory_point = base_pose_joint_positions_; // initial joint positions? -> RI: getJointPositions()
 			// format JointTracectoryPoint? float64[] positions (float64 -> double in C++)
-			trajectory_point.points[0].positions[0] += a1;
-			trajectory_point.points[0].positions[1] += a2;
-			trajectory_point.points[0].positions[2] += a3;
-			trajectory_point.points[0].positions[3] += a4;
-			trajectory_point.points[0].positions[4] += a5;
-			trajectory_point.points[0].positions[5] += a6;
-			trajectory_point.points[0].positions[6] += a7;
-//      target_pose.position.x += x;
-//      target_pose.position.y += y;
-//      target_pose.position.z += z;
-//      target_pose.orientation.x = result_quaternion.getX();
-//      target_pose.orientation.y = result_quaternion.getY();
-//      target_pose.orientation.z = result_quaternion.getZ();
-//      target_pose.orientation.w = result_quaternion.getW();
+			trajectory_point.points[0].positions[0] += a1*angle_conversion_;
+			trajectory_point.points[0].positions[1] += a2*angle_conversion_;
+			trajectory_point.points[0].positions[2] -= a3*angle_conversion_;
+			trajectory_point.points[0].positions[3] += a4*angle_conversion_;
+			trajectory_point.points[0].positions[4] -= a5*angle_conversion_;
+			trajectory_point.points[0].positions[5] += a7*angle_conversion_;
+			trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
+
       publishTrajectory(trajectory_point);
 //    }
   }
@@ -182,18 +208,30 @@ int main(int argc, char **argv)
 	
 	double scale_factor; // MOD
 	node_handle.param("/iiwa/joint_follower/scale_factor", scale_factor, 1.0);
+	
+	// input in rad or deg
+	bool rad_input;
+	node_handle.param("/iiwa/joint_follower/rad_input", rad_input, true);
 
-  joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2);
-  joint_follower.moveToBasePose();
-	// get initial joint positions
-	ROS_INFO_NAMED("joint_follower", "vor getJointPositions()");
+
+  joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2, rad_input);
+	
+//	// use when base pose is given
+//  joint_follower.moveToBasePose();
+//	joint_names = joint_follower.getJointNames();
+//	initial_joint_positions = joint_follower.getJointPositions();
+//	joint_follower.setBasePoseJointPositions(joint_names, initial_joint_positions);
+
+	// use when initial joint positions are given
+	joint_follower.moveToInitialJointPositions();
+	//joint_follower.setBasePoseToCurrent();		
 	joint_names = joint_follower.getJointNames();
 	initial_joint_positions = joint_follower.getJointPositions();
-	ROS_INFO_NAMED("joint_follower", "nach getJointPositions()"); 
 	joint_follower.setBasePoseJointPositions(joint_names, initial_joint_positions);
-	ROS_INFO_NAMED("joint_follower", "nach setBasePoseJointPositions()");
+
   joint_follower.waitForApproval();
-  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromFile/JointPositionRelative")); // jointAngles_read.py has to be written
+  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromFile/JointPositionRelative")); 
+//  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromUDP/JointPosition"));
   //joint_follower.registerSubscriberAbsolute(std::string("/jointFromFile/PoseStampedAbsolute"));
   ROS_INFO_NAMED("joint_follower", "Subscribed to set of joint angles!");
 
