@@ -213,6 +213,10 @@ int main(int argc, char **argv)
 	bool rad_input;
 	node_handle.param("/iiwa/joint_follower/rad_input", rad_input, true);
 
+	// input from udp or csv
+	bool udp_input;
+	node_handle.param("/iiwa/joint_follower/udp", udp_input, false);
+
 
   joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2, rad_input);
 	
@@ -230,10 +234,17 @@ int main(int argc, char **argv)
 	joint_follower.setBasePoseJointPositions(joint_names, initial_joint_positions);
 
   joint_follower.waitForApproval();
-  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromFile/JointPositionRelative")); 
+	if(udp_input) {
+		joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromUDP/JointPosition"));
+		ROS_INFO_NAMED("joint_follower", "Subscribed to set of joint angles from UDP!");
+	}
+	else {
+  	joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromFile/JointPositionRelative"));
+		ROS_INFO_NAMED("joint_follower", "Subscribed to set of joint angles from file!");
+	} 
 //  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromUDP/JointPosition"));
   //joint_follower.registerSubscriberAbsolute(std::string("/jointFromFile/PoseStampedAbsolute"));
-  ROS_INFO_NAMED("joint_follower", "Subscribed to set of joint angles!");
+  
 
 
   ros::Rate rate(10);

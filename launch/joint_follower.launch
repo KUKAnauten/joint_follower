@@ -7,11 +7,13 @@
   <arg name="debug" default="false"/>
 	<arg name="scale_factor" default="1"/> <!-- MOD -->
 	<arg name="rad_input" default="true"/>
+	<arg name="udp" default="false"/>
 
   <group ns="$(arg robot_name)" unless="$(arg debug)">
     <node name="joint_follower" pkg="joint_follower" type="joint_follower" respawn="false" output="screen">
 			<param name="scale_factor" value="$(arg scale_factor)"/> <!-- MOD -->
 			<param name="rad_input" value="$(arg rad_input)"/>
+			<param name="udp" value="$(arg udp)"/>
     </node>
   </group>
 
