@@ -51,7 +51,8 @@ public:
         scale_factor_(scale_factor),
         max_radius_(max_radius),
         max_radius2_(max_radius*max_radius),
-				rad_input_(rad_input) {
+				rad_input_(rad_input),
+				first_time_(true) {
 
 		if(rad_input_) {
 			angle_conversion_ = 1.0;	
@@ -70,25 +71,30 @@ public:
 //    base_pose_.orientation.w = sqrt(2.0)/2.0;
 
 		// use when initial joint positions are given
-		initial_joint_positions_.joint_names.resize(7);
-		initial_joint_positions_.joint_names = RobotInterface::getJointNames();
-		initial_joint_positions_.points.resize(1);
-		initial_joint_positions_.points[0].positions.resize(7);
-		initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -44.2626;
-		initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (16.7988 - 90.0);
-		initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -1.0 * -38.9998;
-		initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -67.7357;
-		initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 61.3977 + 90.0); 
-		initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -11.0314; 
-		initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
+		iiwa_initial_joint_positions_.joint_names.resize(7);
+		iiwa_initial_joint_positions_.joint_names = RobotInterface::getJointNames();
+		iiwa_initial_joint_positions_.points.resize(1);
+		iiwa_initial_joint_positions_.points[0].positions.resize(7);
+		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -44.2626;
+		iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (16.7988 - 90.0);
+		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -1.0 * -38.9998;
+		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -67.7357;
+		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 61.3977 + 90.0); 
+		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -11.0314; 
+		iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
 
-//		initial_joint_positions_.points[0].positions[0] = angle_conversion_ * 0.0;
-//		initial_joint_positions_.points[0].positions[1] = angle_conversion_ * (0.0 - 90.0);
-//		initial_joint_positions_.points[0].positions[2] = angle_conversion_ * -1.0 * 0.0;
-//		initial_joint_positions_.points[0].positions[3] = angle_conversion_ * 0.0;
-//		initial_joint_positions_.points[0].positions[4] = angle_conversion_ * (-1.0 * 0.0 + 90.0); 
-//		initial_joint_positions_.points[0].positions[5] = angle_conversion_ * 0.0; 
-//		initial_joint_positions_.points[0].positions[6] = angle_conversion_ * 0.0;
+//		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * 0.0;
+//		iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (0.0 - 90.0);
+//		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -1.0 * 0.0;
+//		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * 0.0;
+//		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 0.0 + 90.0); 
+//		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * 0.0; 
+//		iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
+
+		mcs_initial_joint_positions_.joint_names.resize(7);
+		mcs_initial_joint_positions_.joint_names = RobotInterface::getJointNames();
+		mcs_initial_joint_positions_.points.resize(1);
+		mcs_initial_joint_positions_.points[0].positions.resize(7);
 		
   }
 
@@ -140,7 +146,7 @@ public:
 	}
 
 	void moveToInitialJointPositions() {
-		planAndMove(initial_joint_positions_.points[0].positions, std::string("initial joint positions"));
+		planAndMove(iiwa_initial_joint_positions_.points[0].positions, std::string("initial joint positions"));
 	}
 
 	void setBasePoseToCurrent() {
@@ -149,14 +155,16 @@ public:
 
 private:
   ros::Subscriber joint_subscriber_;
-	trajectory_msgs::JointTrajectory initial_joint_positions_;
+	trajectory_msgs::JointTrajectory iiwa_initial_joint_positions_;
   geometry_msgs::Pose base_pose_;
 	trajectory_msgs::JointTrajectory base_pose_joint_positions_; 
+	trajectory_msgs::JointTrajectory mcs_initial_joint_positions_;
   double scale_factor_;
   double max_radius_;
   double max_radius2_;
 	bool rad_input_;
 	double angle_conversion_;
+	bool first_time_;
 
 	// will get called when a new message has arrived on the subscribed topic
   void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) { // ConstPtr&? -> typedef constant pointer
@@ -167,23 +175,27 @@ private:
 			double a5 = msg->position.a5;
 			double a6 = msg->position.a6;
 			double a7 = msg->position.a7;
-//    double x = msg->pose.position.x * scale_factor_;
-//    double y = msg->pose.position.y * scale_factor_;
-//    double z = msg->pose.position.z * scale_factor_;
-//    if (x*x + y*y + z*z <= max_radius2_) {
-//      tf::Quaternion base_quaternion(base_pose_.orientation.x, base_pose_.orientation.y, base_pose_.orientation.z, base_pose_.orientation.w);
-//      tf::Quaternion next_quaternion(msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
-//      tf::Quaternion result_quaternion = next_quaternion * base_quaternion;
+
+			if(first_time_) {
+				mcs_initial_joint_positions_.points[0].positions[0] = a1;
+				mcs_initial_joint_positions_.points[0].positions[1] = a2;
+				mcs_initial_joint_positions_.points[0].positions[2] = a3;
+				mcs_initial_joint_positions_.points[0].positions[3] = a4;
+				mcs_initial_joint_positions_.points[0].positions[4] = a5; 
+				mcs_initial_joint_positions_.points[0].positions[5] = a6; 
+				mcs_initial_joint_positions_.points[0].positions[6] = a7;				
+				first_time_ = false;
+			}
 
       //geometry_msgs::Pose target_pose = base_pose_;
 			trajectory_msgs::JointTrajectory trajectory_point = base_pose_joint_positions_; // initial joint positions? -> RI: getJointPositions()
 			// format JointTracectoryPoint? float64[] positions (float64 -> double in C++)
-			trajectory_point.points[0].positions[0] += a1*angle_conversion_;
-			trajectory_point.points[0].positions[1] += a2*angle_conversion_;
-			trajectory_point.points[0].positions[2] -= a3*angle_conversion_;
-			trajectory_point.points[0].positions[3] += a4*angle_conversion_;
-			trajectory_point.points[0].positions[4] -= a5*angle_conversion_;
-			trajectory_point.points[0].positions[5] += a7*angle_conversion_;
+			trajectory_point.points[0].positions[0] += (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
+			trajectory_point.points[0].positions[1] += (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
+			trajectory_point.points[0].positions[2] -= (a3 - mcs_initial_joint_positions_.points[0].positions[2])*angle_conversion_;
+			trajectory_point.points[0].positions[3] += (a4 - mcs_initial_joint_positions_.points[0].positions[3])*angle_conversion_;
+			trajectory_point.points[0].positions[4] -= (a5 - mcs_initial_joint_positions_.points[0].positions[4])*angle_conversion_;
+			trajectory_point.points[0].positions[5] += (a7 - mcs_initial_joint_positions_.points[0].positions[6])*angle_conversion_;
 			trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
 
       publishTrajectory(trajectory_point);
