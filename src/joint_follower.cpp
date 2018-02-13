@@ -95,6 +95,23 @@ public:
 		mcs_initial_joint_positions_.joint_names = RobotInterface::getJointNames();
 		mcs_initial_joint_positions_.points.resize(1);
 		mcs_initial_joint_positions_.points[0].positions.resize(7);
+
+		upper_joint_limits_.resize(7);
+		lower_joint_limits_.resize(7);
+		upper_joint_limits_[0] = 3.1416/180.0 * 170.0;
+		lower_joint_limits_[0] = 3.1416/180.0 * -170.0;
+		upper_joint_limits_[1] = 3.1416/180.0 * 120.0;
+		lower_joint_limits_[1] = 3.1416/180.0 * -120.0;
+		upper_joint_limits_[2] = 3.1416/180.0 * 170.0;
+		lower_joint_limits_[2] = 3.1416/180.0 * -170.0;
+		upper_joint_limits_[3] = 3.1416/180.0 * 120.0;
+		lower_joint_limits_[3] = 3.1416/180.0 * -120.0;
+		upper_joint_limits_[4] = 3.1416/180.0 * 170.0;
+		lower_joint_limits_[4] = 3.1416/180.0 * -170.0;
+		upper_joint_limits_[5] = 3.1416/180.0 * 120.0;
+		lower_joint_limits_[5] = 3.1416/180.0 * -120.0;
+		upper_joint_limits_[6] = 3.1416/180.0 * 175.0;
+		lower_joint_limits_[6] = 3.1416/180.0 * -175.0;
 		
   }
 
@@ -148,7 +165,8 @@ public:
 	void moveToInitialJointPositions() {
 		planAndMove(iiwa_initial_joint_positions_.points[0].positions, std::string("initial joint positions"));
 	}
-
+	
+	// should be private?
 	void setBasePoseToCurrent() {
 		base_pose_ = getPose(std::string("iiwa_link_ee")).pose;	
 	}
@@ -165,6 +183,8 @@ private:
 	bool rad_input_;
 	double angle_conversion_;
 	bool first_time_;
+	std::vector<double> upper_joint_limits_;
+	std::vector<double> lower_joint_limits_;
 
 	// will get called when a new message has arrived on the subscribed topic
   void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) { // ConstPtr&? -> typedef constant pointer
@@ -188,8 +208,7 @@ private:
 			}
 
       //geometry_msgs::Pose target_pose = base_pose_;
-			trajectory_msgs::JointTrajectory trajectory_point = base_pose_joint_positions_; // initial joint positions? -> RI: getJointPositions()
-			// format JointTracectoryPoint? float64[] positions (float64 -> double in C++)
+			trajectory_msgs::JointTrajectory trajectory_point = base_pose_joint_positions_;
 			trajectory_point.points[0].positions[0] += (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
 			trajectory_point.points[0].positions[1] += (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
 			trajectory_point.points[0].positions[2] -= (a3 - mcs_initial_joint_positions_.points[0].positions[2])*angle_conversion_;
@@ -198,6 +217,8 @@ private:
 			trajectory_point.points[0].positions[5] += (a7 - mcs_initial_joint_positions_.points[0].positions[6])*angle_conversion_;
 			trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
 
+			trajectory_point = jointLimitation(trajectory_point);
+
       publishTrajectory(trajectory_point);
 //    }
   }
@@ -205,6 +226,19 @@ private:
   void jointCallbackAbsolute(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     publishPoseGoal(msg->pose, 0.01);
   }
+
+	trajectory_msgs::JointTrajectory jointLimitation(trajectory_msgs::JointTrajectory set_value) {
+		for (int i=0; i<7; i++) {
+			if(set_value.points[0].positions[i] > upper_joint_limits_[i]) {
+				set_value.points[0].positions[i] = upper_joint_limits_[i];
+			}
+			else if	(set_value.points[0].positions[i] < lower_joint_limits_[i]) {
+				set_value.points[0].positions[i] = lower_joint_limits_[i];
+			}		
+		}
+		return set_value;   
+	}
+	
 };
 } // namespace joint_follower
 
@@ -256,8 +290,13 @@ int main(int argc, char **argv)
 	} 
 //  joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromUDP/JointPosition"));
   //joint_follower.registerSubscriberAbsolute(std::string("/jointFromFile/PoseStampedAbsolute"));
-  
 
+//  if(joint_follower.setJointImpedanceMode(0.7, 0.3)) {
+//		ROS_INFO_NAMED("joint_follower", "Success");
+//	}
+//	else {
+//		ROS_INFO_NAMED("joint_follower", "Failure");
+//	}
 
   ros::Rate rate(10);
   while(ros::ok()) {
