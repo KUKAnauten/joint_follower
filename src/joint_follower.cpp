@@ -36,7 +36,7 @@
 
 #include <iimoveit/robot_interface.h>
 #include <tf/LinearMath/Quaternion.h>
-#include <iiwa_msgs/JointPosition.h> // how to include msg type of iiwa stack? JointQuantity also needed?
+#include <iiwa_msgs/JointPosition.h> 
 
 //TODO not only use positions, use speed and accelerations too
 //TODO try out using moveIt! planning live
@@ -249,6 +249,9 @@ int main(int argc, char **argv)
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
+//	ros::Publisher pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("pose", 1000);
+//	geometry_msgs::PoseStamped current_pose;
+
 	std::vector<double> initial_joint_positions;
 	std::vector<std::string> joint_names;
 	
@@ -300,6 +303,9 @@ int main(int argc, char **argv)
 
   ros::Rate rate(10);
   while(ros::ok()) {
+//		current_pose = joint_follower.getPose(std::string("iiwa_link_ee"));
+//		//ROS_INFO("%s", std::to_string(current_pose.pose.position.x).c_str());
+//		pose_pub.publish(current_pose);
     rate.sleep();
   }
   ros::shutdown();

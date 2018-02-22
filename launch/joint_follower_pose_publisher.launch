@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+    
+  <arg name="robot_name" default="iiwa"/>
+  <!-- Model of the iiwa to use : iiwa7, iiwa14 -->
+  <arg name="model" default="iiwa14"/>
+  <arg name="debug" default="false"/>
+	<arg name="scale_factor" default="1"/> <!-- MOD -->
+	<arg name="rad_input" default="true"/>
+	<arg name="udp" default="false"/>
+
+  <group ns="$(arg robot_name)" unless="$(arg debug)">
+    <node name="joint_follower" pkg="joint_follower" type="joint_follower" respawn="false" output="screen">
+			<param name="scale_factor" value="$(arg scale_factor)"/> <!-- MOD -->
+			<param name="rad_input" value="$(arg rad_input)"/>
+			<param name="udp" value="$(arg udp)"/>
+    </node>
+		<node name="pose_publisher" pkg="joint_follower" type="pose_publisher">
+		</node>
+  </group>
+
+  <group ns="$(arg robot_name)" if="$(arg debug)">
+    <node name="joint_follower" pkg="joint_follower" type="joint_follower" respawn="false" output="screen" launch-prefix="xterm -e gdb --args">
+    </node>
+  </group>
+
+</launch>
