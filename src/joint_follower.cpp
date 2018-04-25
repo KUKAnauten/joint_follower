@@ -75,12 +75,12 @@ public:
 		iiwa_initial_joint_positions_.joint_names = RobotInterface::getJointNames();
 		iiwa_initial_joint_positions_.points.resize(1);
 		iiwa_initial_joint_positions_.points[0].positions.resize(7);
-		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -1.0 * -44.2626;
-		iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (16.7988 + 90.0);
-		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -1.0 * -38.9998;
-		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -67.7357;
-		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * ( 61.3977 - 90.0); 
-		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -1.0 * -11.0314; 
+		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -1.0 * -30.97;
+		iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (-1.0 * 18.34 + 90.0);
+		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -21.67;
+		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
+		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (59.36 - 90.0); 
+		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -1.0 * -4.63; 
 		iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
 
 		// initial_positions for pick and place, iiwa mounted on tabletop
