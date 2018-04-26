@@ -75,13 +75,23 @@ public:
 		iiwa_initial_joint_positions_.joint_names = RobotInterface::getJointNames();
 		iiwa_initial_joint_positions_.points.resize(1);
 		iiwa_initial_joint_positions_.points[0].positions.resize(7);
-		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -1.0 * -30.97;
-		iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (-1.0 * 18.34 + 90.0);
-		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -21.67;
-		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
-		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (59.36 - 90.0); 
-		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (-1.0 * -4.63 + 90.0); 
-		iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
+    // Anthropomorphic. Mirrored
+		// iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -1.0 * -30.97;
+		// iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (-1.0 * 18.34 + 90.0);
+		// iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -21.67;
+		// iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
+		// iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (59.36 - 90.0); 
+		// iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (-1.0 * -4.63 + 90.0); 
+		// iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
+
+    // Initial positions to work shift the workspace to the side. Not mirrored
+    iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * 18.34;
+    iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (-30.97 + 90.0);
+    iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * (-1.0 * -21.67 - 90.0);
+    iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
+    iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 59.36 - 90.0); 
+    iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (-4.63 - 90.0); 
+    iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
 
 		// initial_positions for pick and place, iiwa mounted on tabletop
 //		iiwa_initial_joint_positions_.points[0].positions[0] = 3.1416/180.0 * -8.2299;
@@ -227,13 +237,26 @@ private:
 
       //geometry_msgs::Pose target_pose = base_pose_;
 			trajectory_msgs::JointTrajectory trajectory_point = base_pose_joint_positions_;
-			trajectory_point.points[0].positions[0] -= (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
-			trajectory_point.points[0].positions[1] -= (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
-			trajectory_point.points[0].positions[2] += (a3 - mcs_initial_joint_positions_.points[0].positions[2])*angle_conversion_;
-			trajectory_point.points[0].positions[3] -= (a4 - mcs_initial_joint_positions_.points[0].positions[3])*angle_conversion_;
-			trajectory_point.points[0].positions[4] += (a5 - mcs_initial_joint_positions_.points[0].positions[4])*angle_conversion_;
-			trajectory_point.points[0].positions[5] -= (a7 - mcs_initial_joint_positions_.points[0].positions[6])*angle_conversion_;
-			trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
+
+      // In front. Mirrored.
+			// trajectory_point.points[0].positions[0] -= (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
+			// trajectory_point.points[0].positions[1] -= (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
+			// trajectory_point.points[0].positions[2] += (a3 - mcs_initial_joint_positions_.points[0].positions[2])*angle_conversion_;
+			// trajectory_point.points[0].positions[3] -= (a4 - mcs_initial_joint_positions_.points[0].positions[3])*angle_conversion_;
+			// trajectory_point.points[0].positions[4] += (a5 - mcs_initial_joint_positions_.points[0].positions[4])*angle_conversion_;
+			// trajectory_point.points[0].positions[5] -= (a7 - mcs_initial_joint_positions_.points[0].positions[6])*angle_conversion_;
+			// trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
+
+      // To the side. Not mirrored.
+      trajectory_point.points[0].positions[0] += (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
+      trajectory_point.points[0].positions[1] += (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
+      trajectory_point.points[0].positions[2] -= (a3 - mcs_initial_joint_positions_.points[0].positions[2])*angle_conversion_;
+      trajectory_point.points[0].positions[3] -= (a4 - mcs_initial_joint_positions_.points[0].positions[3])*angle_conversion_;
+      trajectory_point.points[0].positions[4] -= (a5 - mcs_initial_joint_positions_.points[0].positions[4])*angle_conversion_;
+      trajectory_point.points[0].positions[5] += (a7 - mcs_initial_joint_positions_.points[0].positions[6])*angle_conversion_;
+      trajectory_point.points[0].positions[6] += 0.0*angle_conversion_;
+
+
 
 //			trajectory_point.points[0].positions[0] += (a1 - mcs_initial_joint_positions_.points[0].positions[0])*angle_conversion_;
 //			trajectory_point.points[0].positions[1] += -1.0 * (a2 - mcs_initial_joint_positions_.points[0].positions[1])*angle_conversion_;
