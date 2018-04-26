@@ -80,7 +80,7 @@ public:
 		iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * -21.67;
 		iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
 		iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (59.36 - 90.0); 
-		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * -1.0 * -4.63; 
+		iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (-1.0 * -4.63 + 90.0); 
 		iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
 
 		// initial_positions for pick and place, iiwa mounted on tabletop
@@ -264,11 +264,11 @@ private:
 
 	trajectory_msgs::JointTrajectory jointLimitation(trajectory_msgs::JointTrajectory set_value) {
 		for (int i=0; i<7; i++) {
-			if(set_value.points[0].positions[i] > upper_joint_limits_[i]) {
-				set_value.points[0].positions[i] = upper_joint_limits_[i];
+			if(set_value.points[0].positions[i] > (upper_joint_limits_[i]-(3.1416/180 * 2.0))) {
+				set_value.points[0].positions[i] = upper_joint_limits_[i]-(3.1416/180 * 2.0);
 			}
-			else if	(set_value.points[0].positions[i] < lower_joint_limits_[i]) {
-				set_value.points[0].positions[i] = lower_joint_limits_[i];
+			else if	(set_value.points[0].positions[i] < (lower_joint_limits_[i]+(3.1416/180 * 2.0))) {
+				set_value.points[0].positions[i] = lower_joint_limits_[i]+(3.1416/180 * 2.0);
 			}		
 		}
 		return set_value;   
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
 //		ROS_INFO_NAMED("joint_follower", "Failure");
 //	}
 
-  ros::Rate rate(10);
+  ros::Rate rate(100);
   while(ros::ok()) {
 //		current_pose = joint_follower.getPose(std::string("iiwa_link_ee"));
 //		//ROS_INFO("%s", std::to_string(current_pose.pose.position.x).c_str());
