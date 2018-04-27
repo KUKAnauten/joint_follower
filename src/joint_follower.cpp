@@ -314,6 +314,7 @@ private:
       coupled_ = false;
       first_time_ = true;
       res.uncouple_res = "Uncoupled!";
+      ROS_INFO("Uncoupled!");
     }
     else if (!req.uncouple_req) {
       coupled_ = true;
