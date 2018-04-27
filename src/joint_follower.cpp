@@ -37,6 +37,7 @@
 #include <iimoveit/robot_interface.h>
 #include <tf/LinearMath/Quaternion.h>
 #include <iiwa_msgs/JointPosition.h> 
+#include <joint_follower/Coupler.h>
 
 //TODO not only use positions, use speed and accelerations too
 //TODO try out using moveIt! planning live
@@ -52,7 +53,8 @@ public:
         max_radius_(max_radius),
         max_radius2_(max_radius*max_radius),
 				rad_input_(rad_input),
-				first_time_(true) {
+				first_time_(true),
+        coupled_(true) {
 
 		if(rad_input_) {
 			angle_conversion_ = 1.0;	
@@ -198,6 +200,12 @@ public:
 		base_pose_ = getPose(std::string("iiwa_link_ee")).pose;	
 	}
 
+  void createUncoupleService() {
+    // service to couple/uncouple the joint follower  
+    uncouple_service_ = node_handle_->advertiseService("coupler", &JointFollower::uncouple, this);
+    ROS_INFO("Uncouple service created.");
+  }
+
 private:
   ros::Subscriber joint_subscriber_;
 	trajectory_msgs::JointTrajectory iiwa_initial_joint_positions_;
@@ -213,9 +221,12 @@ private:
 	std::vector<double> upper_joint_limits_;
 	std::vector<double> lower_joint_limits_;
 	std::vector<double> direction_factor_; // TODO implement directions of counting via variable
+  ros::ServiceServer uncouple_service_;
+  bool coupled_;
 
 	// will get called when a new message has arrived on the subscribed topic
-  void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) { 
+  void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) {
+    if (coupled_) { 
 			double a1 = msg->position.a1; // format -> jointAngles receive/read script
 			double a2 = msg->position.a2;
 			double a3 = msg->position.a3;
@@ -279,6 +290,7 @@ private:
 
       publishTrajectory(trajectory_point);
 //    }
+    }
   }
 
   void jointCallbackAbsolute(const geometry_msgs::PoseStamped::ConstPtr& msg) {
@@ -296,6 +308,19 @@ private:
 		}
 		return set_value;   
 	}
+
+  bool uncouple(joint_follower::Coupler::Request &req, joint_follower::Coupler::Response &res) {
+    if (req.uncouple_req) {
+      coupled_ = false;
+      first_time_ = true;
+      res.uncouple_res = "Uncoupled!";
+    }
+    else if (!req.uncouple_req) {
+      coupled_ = true;
+      res.uncouple_res = "Coupled!";
+    }
+    return true;
+  }
 	
 };
 } // namespace joint_follower
@@ -326,7 +351,8 @@ int main(int argc, char **argv)
 
 
   joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2, rad_input);
-	
+ 
+	joint_follower.createUncoupleService();
 //	// use when base pose is given
 //  joint_follower.moveToBasePose();
 //	joint_names = joint_follower.getJointNames();
