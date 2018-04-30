@@ -114,6 +114,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES joint_follower
 #  CATKIN_DEPENDS control_msgs iimoveit iiwa_description iiwa_moveit iiwa_msgs moveit_msgs moveit_ros_planning_interface moveit_visual_tools roscpp rosmsg
+CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 
