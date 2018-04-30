@@ -244,6 +244,7 @@ private:
 				mcs_initial_joint_positions_.points[0].positions[5] = a6; 
 				mcs_initial_joint_positions_.points[0].positions[6] = a7;				
 				first_time_ = false;
+        ROS_INFO("Set initial joint positions.");
 			}
 
       //geometry_msgs::Pose target_pose = base_pose_;
@@ -313,12 +314,14 @@ private:
     if (req.uncouple_req) {
       coupled_ = false;
       first_time_ = true;
+      setBasePoseJointPositions(getJointNames(), getJointPositions());
       res.uncouple_res = "Uncoupled!";
       ROS_INFO("Uncoupled!");
     }
     else if (!req.uncouple_req) {
       coupled_ = true;
       res.uncouple_res = "Coupled!";
+      ROS_INFO("Coupled!");
     }
     return true;
   }
@@ -369,7 +372,7 @@ int main(int argc, char **argv)
 
   joint_follower.waitForApproval();
 	if(udp_input) {
-		joint_follower.registerSubscriberRelative(std::string("/jointAnglesFromUDP/JointPosition"));
+		joint_follower.registerSubscriberRelative(std::string("/iiwa/jointAnglesFromUDP/JointPosition"));
 		ROS_INFO_NAMED("joint_follower", "Subscribed to set of joint angles from UDP!");
 	}
 	else {
