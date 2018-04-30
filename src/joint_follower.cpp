@@ -142,6 +142,8 @@ public:
 		lower_joint_limits_[5] = 3.1416/180.0 * -120.0;
 		upper_joint_limits_[6] = 3.1416/180.0 * 175.0;
 		lower_joint_limits_[6] = 3.1416/180.0 * -175.0;
+
+    current_joint_positions_.resize(7);
 		
   }
 
@@ -156,6 +158,10 @@ public:
 
   void registerSubscriberAbsolute(const std::string& topic) {
     joint_subscriber_ = node_handle_->subscribe(topic, 1, &JointFollower::jointCallbackAbsolute, this);
+  }
+
+  void registerStateSubscriber(const std::string& topic) {
+    state_subscriber_ = node_handle_->subscribe(topic, 1, &JointFollower::stateCallback, this);
   }
 
   void setBasePose(const geometry_msgs::Pose& pose) {
@@ -223,6 +229,8 @@ private:
 	std::vector<double> direction_factor_; // TODO implement directions of counting via variable
   ros::ServiceServer uncouple_service_;
   bool coupled_;
+  std::vector<double> current_joint_positions_;
+  ros::Subscriber state_subscriber_;
 
 	// will get called when a new message has arrived on the subscribed topic
   void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) {
@@ -314,7 +322,8 @@ private:
     if (req.uncouple_req) {
       coupled_ = false;
       first_time_ = true;
-      setBasePoseJointPositions(getJointNames(), getJointPositions());
+//      setBasePoseJointPositions(getJointNames(), getJointPositions());
+      setBasePoseJointPositions(getJointNames(), current_joint_positions_);
       res.uncouple_res = "Uncoupled!";
       ROS_INFO("Uncoupled!");
     }
@@ -324,6 +333,11 @@ private:
       ROS_INFO("Coupled!");
     }
     return true;
+  }
+
+  void stateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
+    current_joint_positions_ = msg->position;
+//    ROS_INFO("%.4f %.4f %.4f %.4f %.4f %.4f %.4f", current_joint_positions_[0], current_joint_positions_[1], current_joint_positions_[2], current_joint_positions_[3], current_joint_positions_[4], current_joint_positions_[5], current_joint_positions_[6]);  
   }
 	
 };
@@ -355,7 +369,8 @@ int main(int argc, char **argv)
 
 
   joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2, rad_input);
- 
+
+  joint_follower.registerStateSubscriber(std::string("/iiwa/joint_states")); 
 	joint_follower.createUncoupleService();
 //	// use when base pose is given
 //  joint_follower.moveToBasePose();
