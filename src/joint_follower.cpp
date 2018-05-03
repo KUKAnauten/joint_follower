@@ -322,8 +322,8 @@ private:
     if (req.uncouple_req) {
       coupled_ = false;
       first_time_ = true;
-//      setBasePoseJointPositions(getJointNames(), getJointPositions());
-      setBasePoseJointPositions(getJointNames(), current_joint_positions_);
+      // setBasePoseJointPositions(getJointNames(), getJointPositions());
+      // setBasePoseJointPositions(getJointNames(), current_joint_positions_);
       res.uncouple_res = "Uncoupled!";
       ROS_INFO("Uncoupled!");
     }
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
 
   joint_follower::JointFollower joint_follower(&node_handle, "manipulator", "world", scale_factor, 2, rad_input);
 
-  joint_follower.registerStateSubscriber(std::string("/iiwa/joint_states")); 
+  // joint_follower.registerStateSubscriber(std::string("/iiwa/joint_states")); 
 	joint_follower.createUncoupleService();
 //	// use when base pose is given
 //  joint_follower.moveToBasePose();
