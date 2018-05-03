@@ -38,6 +38,7 @@
 #include <tf/LinearMath/Quaternion.h>
 #include <iiwa_msgs/JointPosition.h> 
 #include <joint_follower/Coupler.h>
+#include <joint_follower/GetJointPositions.h>
 
 //TODO not only use positions, use speed and accelerations too
 //TODO try out using moveIt! planning live
@@ -160,9 +161,9 @@ public:
     joint_subscriber_ = node_handle_->subscribe(topic, 1, &JointFollower::jointCallbackAbsolute, this);
   }
 
-  void registerStateSubscriber(const std::string& topic) {
-    state_subscriber_ = node_handle_->subscribe(topic, 1, &JointFollower::stateCallback, this);
-  }
+  // void registerStateSubscriber(const std::string& topic) {
+  //   state_subscriber_ = node_handle_->subscribe(topic, 1, &JointFollower::stateCallback, this);
+  // }
 
   void setBasePose(const geometry_msgs::Pose& pose) {
     base_pose_ = pose;
@@ -212,6 +213,11 @@ public:
     ROS_INFO("Uncouple service created.");
   }
 
+  void createJointPositionClientAndRequest() {
+    joint_positions_client_ = node_handle_->serviceClient<joint_follower::GetJointPositions>("get_joint_positions", this);
+    get_joint_positions_service_.request.joint_positions_req = true;
+  }
+
 private:
   ros::Subscriber joint_subscriber_;
 	trajectory_msgs::JointTrajectory iiwa_initial_joint_positions_;
@@ -230,7 +236,9 @@ private:
   ros::ServiceServer uncouple_service_;
   bool coupled_;
   std::vector<double> current_joint_positions_;
-  ros::Subscriber state_subscriber_;
+  // ros::Subscriber state_subscriber_;
+  ros::ServiceClient joint_positions_client_;
+  joint_follower::GetJointPositions get_joint_positions_service_;
 
 	// will get called when a new message has arrived on the subscribed topic
   void jointCallbackRelative(const iiwa_msgs::JointPosition::ConstPtr& msg) {
@@ -322,6 +330,20 @@ private:
     if (req.uncouple_req) {
       coupled_ = false;
       first_time_ = true;
+      if (joint_positions_client_.call(get_joint_positions_service_)) {
+        current_joint_positions_[0] = get_joint_positions_service_.response.q1;
+        current_joint_positions_[1] = get_joint_positions_service_.response.q2;
+        current_joint_positions_[2] = get_joint_positions_service_.response.q3;
+        current_joint_positions_[3] = get_joint_positions_service_.response.q4;
+        current_joint_positions_[4] = get_joint_positions_service_.response.q5;
+        current_joint_positions_[5] = get_joint_positions_service_.response.q6;
+        current_joint_positions_[6] = get_joint_positions_service_.response.q7;
+        setBasePoseJointPositions(getJointNames(), current_joint_positions_);
+        ROS_INFO("yuuuuuurp");
+      }
+      else {
+        ROS_INFO("Failed to call service get_joint_positions");
+      }
       // setBasePoseJointPositions(getJointNames(), getJointPositions());
       // setBasePoseJointPositions(getJointNames(), current_joint_positions_);
       res.uncouple_res = "Uncoupled!";
@@ -335,10 +357,10 @@ private:
     return true;
   }
 
-  void stateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
-    current_joint_positions_ = msg->position;
-//    ROS_INFO("%.4f %.4f %.4f %.4f %.4f %.4f %.4f", current_joint_positions_[0], current_joint_positions_[1], current_joint_positions_[2], current_joint_positions_[3], current_joint_positions_[4], current_joint_positions_[5], current_joint_positions_[6]);  
-  }
+//   void stateCallback(const sensor_msgs::JointState::ConstPtr& msg) {
+//     current_joint_positions_ = msg->position;
+// //    ROS_INFO("%.4f %.4f %.4f %.4f %.4f %.4f %.4f", current_joint_positions_[0], current_joint_positions_[1], current_joint_positions_[2], current_joint_positions_[3], current_joint_positions_[4], current_joint_positions_[5], current_joint_positions_[6]);  
+//   }
 	
 };
 } // namespace joint_follower
@@ -372,6 +394,10 @@ int main(int argc, char **argv)
 
   // joint_follower.registerStateSubscriber(std::string("/iiwa/joint_states")); 
 	joint_follower.createUncoupleService();
+
+  // Create service client to request the joint positions only when needed
+  joint_follower.createJointPositionClientAndRequest();
+
 //	// use when base pose is given
 //  joint_follower.moveToBasePose();
 //	joint_names = joint_follower.getJointNames();

@@ -65,6 +65,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
  FILES
  Coupler.srv
+ GetJointPositions.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -78,7 +79,8 @@ add_service_files(
 generate_messages(
  DEPENDENCIES
 # control_msgs#   iiwa_msgs#   moveit_msgs
- std_msgs 
+ std_msgs
+ iiwa_msgs 
 )
 
 ################################################
@@ -144,6 +146,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(joint_follower src/joint_follower.cpp)
 add_executable(pose_publisher src/pose_publisher.cpp)
+add_executable(joint_positions_server src/joint_positions_server.cpp)
+add_executable(state_publisher src/state_publisher.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,12 +159,20 @@ add_executable(pose_publisher src/pose_publisher.cpp)
 ## same as for the library above
 add_dependencies(joint_follower ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(pose_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(joint_positions_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(state_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(joint_follower
   ${catkin_LIBRARIES}
 )
 target_link_libraries(pose_publisher
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(joint_positions_server
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(state_publisher
   ${catkin_LIBRARIES}
 )
 
