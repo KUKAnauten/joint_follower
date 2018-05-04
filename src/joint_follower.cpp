@@ -92,8 +92,8 @@ public:
     iiwa_initial_joint_positions_.points[0].positions[1] = 3.1416/180.0 * (-30.97 + 90.0);
     iiwa_initial_joint_positions_.points[0].positions[2] = 3.1416/180.0 * (-1.0 * -21.67 - 90.0);
     iiwa_initial_joint_positions_.points[0].positions[3] = 3.1416/180.0 * -1.0 * -57.57;
-    iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 59.36 - 90.0); 
-    iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (-4.63 - 90.0); 
+    iiwa_initial_joint_positions_.points[0].positions[4] = 3.1416/180.0 * (-1.0 * 70.0 - 90.0); 
+    iiwa_initial_joint_positions_.points[0].positions[5] = 3.1416/180.0 * (0.0 - 90.0); 
     iiwa_initial_joint_positions_.points[0].positions[6] = 3.1416/180.0 * 0.0;
 
 		// initial_positions for pick and place, iiwa mounted on tabletop
